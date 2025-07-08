@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Group = require('../models/Group');
+const paginate = require('../middlewares/paginate');
 
 router.post('/', async (req, res) => {
   const group = new Group(req.body);
@@ -8,12 +9,9 @@ router.post('/', async (req, res) => {
   res.status(201).json(group);
 });
 
-
-router.get('/', async (req, res) => {
-  const groups = await Group.find();
-  res.json(groups);
+router.get('/', paginate(Group), (req, res) => {
+  res.json(res.paginatedResults);
 });
-
 
 router.get('/:id', async (req, res) => {
   const group = await Group.findById(req.params.id);
@@ -21,12 +19,10 @@ router.get('/:id', async (req, res) => {
   res.json(group);
 });
 
-
 router.put('/:id', async (req, res) => {
   const group = await Group.findByIdAndUpdate(req.params.id, req.body, { new: true });
   res.json(group);
 });
-
 
 router.delete('/:id', async (req, res) => {
   await Group.findByIdAndDelete(req.params.id);

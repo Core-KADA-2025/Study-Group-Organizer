@@ -1,18 +1,22 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-require('dotenv').config();
+const passport = require('passport');
+require('./passport/strategies/google');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(passport.initialize());
 
 app.get('/', (req, res) => {
   res.send('Welcome to the Study Group API');
 });
-app.use('/groups', require('./routes/groupRoutes'));
-app.use('/rooms', require('./routes/roomRoutes'));
-app.use('/notes', require('./routes/noteRoutes'));
+
+app.use('/groups', require('./routes/Groups'));
+app.use('/rooms', require('./routes/Rooms'));
+app.use('/notes', require('./routes/Notes'));
+app.use('/auth', require('./routes/Auth')); 
 
 mongoose.connect('mongodb://127.0.0.1:27017/studygroup', {
   useNewUrlParser: true,

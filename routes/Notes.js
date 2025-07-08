@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Note = require('../models/Note');
+const paginate = require('../middlewares/paginate');
 
 router.post('/', async (req, res) => {
   const note = new Note(req.body);
@@ -8,9 +9,8 @@ router.post('/', async (req, res) => {
   res.status(201).json(note);
 });
 
-router.get('/', async (req, res) => {
-  const notes = await Note.find().populate('room');
-  res.json(notes);
+router.get('/', paginate(Note, 'room'), (req, res) => {
+  res.json(res.paginatedResults);
 });
 
 router.get('/:id', async (req, res) => {

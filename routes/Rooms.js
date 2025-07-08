@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Room = require('../models/Room');
+const paginate = require('../middlewares/paginate');
 
 router.post('/', async (req, res) => {
   const room = new Room(req.body);
@@ -8,9 +9,8 @@ router.post('/', async (req, res) => {
   res.status(201).json(room);
 });
 
-router.get('/', async (req, res) => {
-  const rooms = await Room.find().populate('group');
-  res.json(rooms);
+router.get('/', paginate(Room, 'group'), (req, res) => {
+  res.json(res.paginatedResults);
 });
 
 router.get('/:id', async (req, res) => {
