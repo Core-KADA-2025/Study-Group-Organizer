@@ -1,25 +1,20 @@
-const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const User = require('../../models/User');
 
-passport.use(new GoogleStrategy({
-  clientID: '19302358821-ru7ka6q98v6r2b3k3ju260ve6as8amrh.apps.googleusercontent.com',
-  clientSecret: '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',
-  callbackURL: '/auth/google/callback',
+module.exports = new GoogleStrategy({
+  clientID: '19302358821-nooes0bnrjn76641cs794vsgig4srto4.apps.googleusercontent.com',
+  clientSecret: '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',
+  callbackURL: "http://localhost:5000/auth/google/callback"
 }, async (accessToken, refreshToken, profile, done) => {
-  try {
-    let user = await User.findOne({ googleId: profile.id });
+  const existing = await User.findOne({ googleId: profile.id });
+  if (existing) return done(null, existing);
 
-    if (!user) {
-      user = await User.create({
-        googleId: profile.id,
-        name: profile.displayName,
-        email: profile.emails?.[0].value,
-      });
-    }
-
-    done(null, user);
-  } catch (err) {
-    done(err, null);
-  }
-}));
+  const newUser = new User({
+    googleId: profile.id,
+    name: profile.displayName,
+    email: profile.emails[0].value,
+    isVerified: true
+  });
+  await newUser.save();
+  done(null, newUser);
+});

@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -23,6 +24,7 @@
     "seed": "^0.4.4"
   },
   "devDependencies": {
+    "@ljharb/tsconfig": "^0.3.2",
     "nodemon": "^3.1.10"
   }
 }

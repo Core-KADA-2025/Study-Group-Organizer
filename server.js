@@ -1,14 +1,20 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const passport = require('passport');
-require('./passport/strategies/google');
+const { signToken } = require('./utils/jwt');
 
+require('./passport'); 
 const app = express();
-app.use(cors());
+
+// Middleware
+app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
 app.use(express.json());
+app.use(cookieParser());
 app.use(passport.initialize());
 
+// Routes
 app.get('/', (req, res) => {
   res.send('Welcome to the Study Group API');
 });
@@ -16,8 +22,29 @@ app.get('/', (req, res) => {
 app.use('/groups', require('./routes/Groups'));
 app.use('/rooms', require('./routes/Rooms'));
 app.use('/notes', require('./routes/Notes'));
-app.use('/auth', require('./routes/Auth')); 
+app.use('/auth', require('./routes/Auth'));
 
+// Google OAuth
+app.get('/auth/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+app.get('/auth/google/callback',
+  passport.authenticate('google', { session: false }),
+  (req, res) => {
+    const token = signToken({ id: req.user._id });
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: false,
+      maxAge: 86400000
+    });
+
+    res.redirect('http://localhost:3000/dashboard');
+  }
+);
+
+// MongoDB connection
 mongoose.connect('mongodb://127.0.0.1:27017/studygroup', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
