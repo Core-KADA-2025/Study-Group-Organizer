@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Group = require('../models/Group');
 const User = require('../models/User');
-const { protect } = require('../middlewares/AuthMiddlewares');
+const { protect } = require('../middlewares/auth');
 
 // Buat group dan invite via email
 router.post('/', protect, async (req, res) => {

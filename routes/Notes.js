@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Note = require('../models/Note');
-const { protect, authorizeGroupAccess } = require('../middlewares/AuthMiddlewares');
+const { protect, authorizeGroupAccess } = require('../middlewares/auth');
 
 // Buat note di dalam room (dan group)
 router.post('/', protect, authorizeGroupAccess, async (req, res) => {

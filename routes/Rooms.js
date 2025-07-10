@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Room = require('../models/Room');
-const { protect, authorizeGroupAccess } = require('../middlewares/AuthMiddlewares');
+const { protect, authorizeGroupAccess } = require('../middlewares/auth');
 
 // Buat room di dalam group
 router.post('/', protect, authorizeGroupAccess, async (req, res) => {
