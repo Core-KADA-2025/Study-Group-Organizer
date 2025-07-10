@@ -1,32 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const Note = require('../models/Note');
-const paginate = require('../middlewares/paginate');
+const { protect, authorizeGroupAccess } = require('../middlewares/AuthMiddlewares');
 
-router.post('/', async (req, res) => {
-  const note = new Note(req.body);
+// Buat note di dalam room (dan group)
+router.post('/', protect, authorizeGroupAccess, async (req, res) => {
+  const { title, content, room, group } = req.body;
+
+  const note = new Note({ title, content, room, group });
   await note.save();
   res.status(201).json(note);
 });
 
-router.get('/', paginate(Note, 'room'), (req, res) => {
-  res.json(res.paginatedResults);
-});
+// Ambil semua notes dalam room dan group tertentu
+router.get('/:groupId/:roomId', protect, authorizeGroupAccess, async (req, res) => {
+  const { groupId, roomId } = req.params;
 
-router.get('/:id', async (req, res) => {
-  const note = await Note.findById(req.params.id).populate('room');
-  if (!note) return res.status(404).send('Not found');
-  res.json(note);
-});
-
-router.put('/:id', async (req, res) => {
-  const note = await Note.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  res.json(note);
-});
-
-router.delete('/:id', async (req, res) => {
-  await Note.findByIdAndDelete(req.params.id);
-  res.sendStatus(204);
+  const notes = await Note.find({ group: groupId, room: roomId });
+  res.json(notes);
 });
 
 module.exports = router;

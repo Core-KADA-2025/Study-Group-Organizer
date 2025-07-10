@@ -1,32 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const Room = require('../models/Room');
-const paginate = require('../middlewares/paginate');
+const { protect, authorizeGroupAccess } = require('../middlewares/AuthMiddlewares');
 
-router.post('/', async (req, res) => {
-  const room = new Room(req.body);
+// Buat room di dalam group
+router.post('/', protect, authorizeGroupAccess, async (req, res) => {
+  const { name, group } = req.body;
+
+  const room = new Room({ name, group });
   await room.save();
   res.status(201).json(room);
 });
 
-router.get('/', paginate(Room, 'group'), (req, res) => {
-  res.json(res.paginatedResults);
-});
+// Ambil semua room dalam group tertentu
+router.get('/:groupId', protect, authorizeGroupAccess, async (req, res) => {
+  const { groupId } = req.params;
 
-router.get('/:id', async (req, res) => {
-  const room = await Room.findById(req.params.id).populate('group');
-  if (!room) return res.status(404).send('Not found');
-  res.json(room);
-});
-
-router.put('/:id', async (req, res) => {
-  const room = await Room.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  res.json(room);
-});
-
-router.delete('/:id', async (req, res) => {
-  await Room.findByIdAndDelete(req.params.id);
-  res.sendStatus(204);
+  const rooms = await Room.find({ group: groupId });
+  res.json(rooms);
 });
 
 module.exports = router;

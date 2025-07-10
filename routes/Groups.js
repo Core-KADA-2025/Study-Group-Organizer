@@ -1,32 +1,33 @@
 const express = require('express');
 const router = express.Router();
 const Group = require('../models/Group');
-const paginate = require('../middlewares/paginate');
+const User = require('../models/User');
+const { protect } = require('../middlewares/AuthMiddlewares');
 
-router.post('/', async (req, res) => {
-  const group = new Group(req.body);
-  await group.save();
-  res.status(201).json(group);
+// Buat group dan invite via email
+router.post('/', protect, async (req, res) => {
+  const { name, description, memberEmails } = req.body;
+
+  try {
+    const members = await User.find({ email: { $in: memberEmails } });
+    const memberIds = members.map(u => u._id);
+
+    // Tambahkan pembuat jika belum ada
+    if (!memberIds.includes(req.user._id)) {
+      memberIds.push(req.user._id);
+    }
+
+    const group = await Group.create({ name, description, members: memberIds });
+    res.status(201).json(group);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to create group', error: err.message });
+  }
 });
 
-router.get('/', paginate(Group), (req, res) => {
-  res.json(res.paginatedResults);
-});
-
-router.get('/:id', async (req, res) => {
-  const group = await Group.findById(req.params.id);
-  if (!group) return res.status(404).send('Not found');
-  res.json(group);
-});
-
-router.put('/:id', async (req, res) => {
-  const group = await Group.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  res.json(group);
-});
-
-router.delete('/:id', async (req, res) => {
-  await Group.findByIdAndDelete(req.params.id);
-  res.sendStatus(204);
+// Dapatkan semua group yang user ikuti
+router.get('/', protect, async (req, res) => {
+  const groups = await Group.find({ members: req.user._id });
+  res.json(groups);
 });
 
 module.exports = router;

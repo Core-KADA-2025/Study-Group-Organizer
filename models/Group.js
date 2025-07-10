@@ -1,8 +1,21 @@
+//import
 const mongoose = require('mongoose');
+const {Schema} = mongoose;
 
-const groupSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  description: String,
-}, { timestamps: true });
+//buat shema
+const groupSchema = new Schema({
+    name:{
+        type:String,
+        require:true,
+    },
+    description:{
+        type:String,
+        require:true,
+    },
+    members :  [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+},{
+    timestamps:true,
+})
 
-module.exports = mongoose.model('Group', groupSchema);
+//buat model
+module.exports = new mongoose.model('Group',groupSchema)
