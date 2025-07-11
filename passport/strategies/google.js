@@ -1,4 +1,3 @@
-// google-strategy.js
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const User = require('../../models/User');
@@ -8,11 +7,11 @@ module.exports = new GoogleStrategy({
   clientID: '19302358821-nooes0bnrjn76641cs794vsgig4srto4.apps.googleusercontent.com',
   clientSecret: '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',
   callbackURL: "http://localhost:5000/auth/google/callback",
-  scope: ['profile', 'email'], // ⬅️ Tambahkan ini
-  passReqToCallback: false // ⬅️ Tambahkan ini
+  scope: ['profile', 'email'], 
+  passReqToCallback: false 
 }, async (accessToken, refreshToken, profile, done) => {
   try {
-    console.log('[Google Strategy] Profile:', profile); // Debug
+    console.log('[Google Strategy] Profile:', profile); 
     
     let user = await User.findOne({ googleId: profile.id });
 
@@ -25,7 +24,12 @@ module.exports = new GoogleStrategy({
       });
     }
 
-    const token = signToken({ id: user._id });
+    const token = signToken({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+    });
+
     console.log('[Google Strategy] Token created:', token);
 
     done(null, { token, user });

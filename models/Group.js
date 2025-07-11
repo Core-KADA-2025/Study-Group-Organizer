@@ -1,21 +1,22 @@
-//import
+// study-group-backend/models/Group.js
 const mongoose = require('mongoose');
 const {Schema} = mongoose;
 
-//buat shema
+// Fixed schema with correct 'required' property
 const groupSchema = new Schema({
     name:{
-        type:String,
-        require:true,
+        type: String,
+        required: true, // Fixed: was 'require'
     },
     description:{
-        type:String,
-        require:true,
+        type: String,
+        required: true, // Fixed: was 'require'
     },
-    members :  [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 },{
-    timestamps:true,
+    timestamps: true,
 })
 
-//buat model
-module.exports = new mongoose.model('Group',groupSchema)
+// Fixed model export
+module.exports = mongoose.model('Group', groupSchema); // Fixed: removed 'new'
+

@@ -8,146 +8,98 @@ const { signToken, verifyToken } = require('../utils/jwt');
 
 const router = express.Router();
 
-// Register endpoint
+// REGISTER
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    // Validate input
     if (!name || !email || !password) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'All fields are required' 
-      });
+      return res.status(400).json({ success: false, message: 'All fields are required' });
     }
 
-    // Check if user already exists
     const existing = await User.findOne({ email });
     if (existing) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Email already registered' 
-      });
+      return res.status(400).json({ success: false, message: 'Email already registered' });
     }
 
-    // Hash password
     const hashed = await bcrypt.hash(password, 12);
-    
-    // Create user
-    const user = new User({ 
-      name, 
-      email, 
-      password: hashed,
-      isVerified: false 
-    });
+    const user = new User({ name, email, password: hashed, isVerified: false });
     await user.save();
 
-    // Generate verification token
     const token = signToken({ id: user._id });
 
-    // Send verification email
+    // ✅ Kirim email ke endpoint backend verifikasi, bukan frontend
     const html = `
       <h2>Verify Your Email</h2>
       <p>Click the link below to verify your email:</p>
-      <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify/${token}">
+      <a href="${process.env.BACKEND_URL || 'http://localhost:5000'}/auth/verify/${token}">
         Verify Email
       </a>
     `;
-    
+
     await sendEmail(email, 'Verify your email', html);
 
     res.status(201).json({ 
       success: true, 
-      message: 'User registered successfully. Please check your email for verification.',
+      message: 'User registered successfully. Please check your email for verification.', 
       token 
     });
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Registration failed' 
-    });
+    res.status(500).json({ success: false, message: 'Registration failed' });
   }
 });
 
-// Email verification endpoint
+// EMAIL VERIFICATION
 router.get('/verify/:token', async (req, res) => {
   try {
     const decoded = verifyToken(req.params.token);
-    
-    const user = await User.findByIdAndUpdate(
-      decoded.id, 
-      { isVerified: true },
-      { new: true }
-    );
+    console.log('[VERIFY] Token decoded:', decoded);
+
+    const user = await User.findByIdAndUpdate(decoded.id, { isVerified: true }, { new: true });
 
     if (!user) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Invalid verification token' 
-      });
+      console.error('[VERIFY] User not found');
+      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/?verified=false`);
     }
 
-    // Redirect to frontend with success message
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?verified=true`);
+    console.log('[VERIFY] User verified:', user.email);
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/?verified=true`);
   } catch (error) {
-    console.error('Verification error:', error);
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=verification_failed`);
+    console.error('[VERIFY] Error:', error.message);
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/?verified=false`);
   }
 });
 
-// Login endpoint
+// LOGIN
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validate input
     if (!email || !password) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Email and password are required' 
-      });
+      return res.status(400).json({ success: false, message: 'Email and password are required' });
     }
 
-    // Find user
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Invalid credentials' 
-      });
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(400).json({ success: false, message: 'Invalid credentials' });
     }
 
-    // Check password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Invalid credentials' 
-      });
-    }
-
-    // Check if email is verified
     if (!user.isVerified) {
-      return res.status(403).json({ 
-        success: false, 
-        message: 'Please verify your email before logging in' 
-      });
+      return res.status(403).json({ success: false, message: 'Please verify your email before logging in' });
     }
 
-    // Generate token
     const token = signToken({ id: user._id });
 
-    // Set cookie (optional)
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      maxAge: 24 * 60 * 60 * 1000
     });
 
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       message: 'Login successful',
       token,
       user: {
@@ -159,65 +111,47 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Login failed' 
-    });
+    res.status(500).json({ success: false, message: 'Login failed' });
   }
 });
 
-// Get current user
+// GET ME
 router.get('/me', authenticate, async (req, res) => {
   try {
-    res.json({ 
-      success: true, 
-      user: req.user 
-    });
+    res.json({ success: true, user: req.user });
   } catch (error) {
     console.error('Get user error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to get user data' 
-    });
+    res.status(500).json({ success: false, message: 'Failed to get user data' });
   }
 });
 
-// Logout endpoint
+// LOGOUT
 router.post('/logout', (req, res) => {
   res.clearCookie('token');
-  res.json({ 
-    success: true, 
-    message: 'Logged out successfully' 
-  });
+  res.json({ success: true, message: 'Logged out successfully' });
 });
 
-// Google OAuth routes
+// GOOGLE OAUTH
 router.get('/google',
-  passport.authenticate('google', { 
-    scope: ['profile', 'email'] 
-  })
+  passport.authenticate('google', { scope: ['profile', 'email'] })
 );
 
 router.get('/google/callback',
-  passport.authenticate('google', { 
-    session: false, 
-    failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=google_auth_failed` 
+  passport.authenticate('google', {
+    session: false,
+    failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=google_auth_failed`
   }),
   (req, res) => {
     try {
-      console.log('[Google Callback] User:', req.user);
-      
       if (!req.user || !req.user.token) {
-        return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=no_token`);
+        return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=no_token`);
       }
 
       const token = req.user.token;
-      console.log('[Google Callback] Redirecting with token');
-      
-      res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/oauth-redirect?token=${token}`);
+      res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/oauth-redirect?token=${token}`);
     } catch (error) {
       console.error('[Google Callback] Error:', error);
-      res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=callback_error`);
+      res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=callback_error`);
     }
   }
 );
