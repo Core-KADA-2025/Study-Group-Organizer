@@ -8,7 +8,6 @@ const { signToken, verifyToken } = require('../utils/jwt');
 
 const router = express.Router();
 
-// REGISTER
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -28,7 +27,6 @@ router.post('/register', async (req, res) => {
 
     const token = signToken({ id: user._id });
 
-    // ✅ Kirim email ke endpoint backend verifikasi, bukan frontend
     const html = `
       <h2>Verify Your Email</h2>
       <p>Click the link below to verify your email:</p>
@@ -50,7 +48,6 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// EMAIL VERIFICATION
 router.get('/verify/:token', async (req, res) => {
   try {
     const decoded = verifyToken(req.params.token);
@@ -71,7 +68,6 @@ router.get('/verify/:token', async (req, res) => {
   }
 });
 
-// LOGIN
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -115,7 +111,6 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// GET ME
 router.get('/me', authenticate, async (req, res) => {
   try {
     res.json({ success: true, user: req.user });
@@ -125,13 +120,11 @@ router.get('/me', authenticate, async (req, res) => {
   }
 });
 
-// LOGOUT
 router.post('/logout', (req, res) => {
   res.clearCookie('token');
   res.json({ success: true, message: 'Logged out successfully' });
 });
 
-// GOOGLE OAUTH
 router.get('/google',
   passport.authenticate('google', { scope: ['profile', 'email'] })
 );

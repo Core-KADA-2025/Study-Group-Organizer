@@ -3,7 +3,6 @@ const router = express.Router();
 const Note = require('../models/Note');
 const { protect, authorizeGroupAccess } = require('../middlewares/auth');
 
-// Buat note di dalam room (dan group)
 router.post('/', protect, authorizeGroupAccess, async (req, res) => {
   const { title, content, room, group } = req.body;
 
@@ -12,7 +11,6 @@ router.post('/', protect, authorizeGroupAccess, async (req, res) => {
   res.status(201).json(note);
 });
 
-// Ambil semua notes dalam room dan group tertentu
 router.get('/:groupId/:roomId', protect, authorizeGroupAccess, async (req, res) => {
   const { groupId, roomId } = req.params;
 

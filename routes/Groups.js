@@ -1,16 +1,13 @@
-// study-group-backend/routes/Groups.js
 const express = require('express');
 const router = express.Router();
 const Group = require('../models/Group');
 const User = require('../models/User');
 const { protect } = require('../middlewares/auth');
 
-// Create group and invite via email
 router.post('/', protect, async (req, res) => {
   const { name, description, memberEmails } = req.body;
 
   try {
-    // Input validation
     if (!name || !description) {
       return res.status(400).json({ 
         success: false, 
@@ -20,13 +17,11 @@ router.post('/', protect, async (req, res) => {
 
     let memberIds = [];
     
-    // If there are member emails, find users by email
     if (memberEmails && memberEmails.length > 0) {
       const members = await User.find({ email: { $in: memberEmails } });
       memberIds = members.map(u => u._id);
     }
 
-    // Add creator if not already included
     if (!memberIds.some(id => id.toString() === req.user._id.toString())) {
       memberIds.push(req.user._id);
     }
@@ -37,7 +32,6 @@ router.post('/', protect, async (req, res) => {
       members: memberIds 
     });
 
-    // Populate members for response
     const populatedGroup = await Group.findById(group._id).populate('members', 'name email');
     
     res.status(201).json(populatedGroup);
@@ -51,7 +45,6 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
-// Get all groups that user is a member of
 router.get('/', protect, async (req, res) => {
   try {
     const groups = await Group.find({ members: req.user._id })
@@ -69,7 +62,6 @@ router.get('/', protect, async (req, res) => {
   }
 });
 
-// Get group by ID
 router.get('/:id', protect, async (req, res) => {
   try {
     const group = await Group.findById(req.params.id)
@@ -82,7 +74,6 @@ router.get('/:id', protect, async (req, res) => {
       });
     }
 
-    // Check if user is a member of this group
     const isMember = group.members.some(member => 
       member._id.toString() === req.user._id.toString()
     );
@@ -105,12 +96,10 @@ router.get('/:id', protect, async (req, res) => {
   }
 });
 
-// Update group
 router.put('/:id', protect, async (req, res) => {
   try {
     const { name, description, memberEmails } = req.body;
-    
-    // Input validation
+
     if (!name || !description) {
       return res.status(400).json({ 
         success: false, 
@@ -127,7 +116,6 @@ router.put('/:id', protect, async (req, res) => {
       });
     }
 
-    // Check if user is a member of this group
     const isMember = group.members.some(member => 
       member.toString() === req.user._id.toString()
     );
@@ -139,16 +127,13 @@ router.put('/:id', protect, async (req, res) => {
       });
     }
 
-    // Update basic info
     group.name = name;
     group.description = description;
 
-    // Update members if new emails provided
     if (memberEmails && memberEmails.length > 0) {
       const members = await User.find({ email: { $in: memberEmails } });
       let memberIds = members.map(u => u._id);
       
-      // Ensure the updating user remains in the group
       if (!memberIds.some(id => id.toString() === req.user._id.toString())) {
         memberIds.push(req.user._id);
       }
@@ -158,7 +143,6 @@ router.put('/:id', protect, async (req, res) => {
 
     await group.save();
 
-    // Populate members for response
     const updatedGroup = await Group.findById(group._id).populate('members', 'name email');
     
     res.json(updatedGroup);
@@ -172,7 +156,6 @@ router.put('/:id', protect, async (req, res) => {
   }
 });
 
-// Delete group
 router.delete('/:id', protect, async (req, res) => {
   try {
     const group = await Group.findById(req.params.id);
@@ -184,7 +167,6 @@ router.delete('/:id', protect, async (req, res) => {
       });
     }
 
-    // Check if user is a member of this group
     const isMember = group.members.some(member => 
       member.toString() === req.user._id.toString()
     );

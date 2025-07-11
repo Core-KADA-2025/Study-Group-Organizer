@@ -2,16 +2,14 @@ const { verifyToken } = require('../utils/jwt');
 const User = require('../models/User');
 const Group = require('../models/Group');
 
-// Unified authentication middleware
 const authenticate = async (req, res, next) => {
   try {
     let token;
 
-    // Check for token in Authorization header
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
     } 
-    // Check for token in cookies as fallback
+
     else if (req.cookies?.token) {
       token = req.cookies.token;
     }
@@ -23,10 +21,8 @@ const authenticate = async (req, res, next) => {
       });
     }
 
-    // Verify token
     const decoded = verifyToken(token);
     
-    // Get user from database
     const user = await User.findById(decoded.id).select('-password');
     
     if (!user) {
@@ -48,7 +44,6 @@ const authenticate = async (req, res, next) => {
   } catch (error) {
     console.error('Authentication error:', error);
     
-    // Handle specific JWT errors
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({ 
         success: false, 
@@ -70,7 +65,6 @@ const authenticate = async (req, res, next) => {
   }
 };
 
-// Group access authorization
 const authorizeGroupAccess = async (req, res, next) => {
   try {
     const groupId = req.body.group || req.params.groupId;
