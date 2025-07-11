@@ -6,7 +6,7 @@ const { signToken } = require('../../utils/jwt');
 module.exports = new GoogleStrategy({
   clientID: '19302358821-nooes0bnrjn76641cs794vsgig4srto4.apps.googleusercontent.com',
   clientSecret: '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',
-  callbackURL: "http://localhost:5000/auth/google/callback",
+  callbackURL: "https://backend-own.hopto.org/auth/google/callback",
   scope: ['profile', 'email'], 
   passReqToCallback: false 
 }, async (accessToken, refreshToken, profile, done) => {

@@ -33,5 +33,5 @@ mongoose.connect('mongodb+srv://CORE:core@database.vmq2udh.mongodb.net/studygrou
 .catch((err) => console.error('MongoDB error:', err));
 
 app.listen(5000, '0.0.0.0', () => {
-  console.log('Server running on http://localhost:5000');
+  console.log('Server running on https://backend-own.hopto.org/');
 });

@@ -30,7 +30,7 @@ router.post('/register', async (req, res) => {
     const html = `
       <h2>Verify Your Email</h2>
       <p>Click the link below to verify your email:</p>
-      <a href="${process.env.BACKEND_URL || 'http://localhost:5000'}/auth/verify/${token}">
+      <a href="${process.env.BACKEND_URL || 'https://backend-own.hopto.org/'}/auth/verify/${token}">
         Verify Email
       </a>
     `;
