@@ -25,7 +25,7 @@ app.use('/notes', require('./routes/Notes'));
 app.use('/auth', require('./routes/Auth'));
 
 // MongoDB connection
-mongoose.connect('mongodb://127.0.0.1:27017/studygroup', {
+mongoose.connect('mongodb+srv://CORE:core@database.vmq2udh.mongodb.net/studygroup?retryWrites=true&w=majority&appName=database', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
